@@ -1,0 +1,39 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Course materials and logs
+*.pdf
+*.log
+
+# Kaggle raw data
+data/raw/*
+!data/raw/.gitkeep
+
+data/processed/*
+!data/processed/.gitkeep
+
+# Trained models
+models/*
+!models/.gitkeep
+
+# Generated predictions
+predictions/oof/*.csv
+predictions/test/*.csv
+submissions/*.csv
+
+# Temporary outputs
+output/*
+!output/.gitkeep
+
+tmp/*
+!tmp/.gitkeep
