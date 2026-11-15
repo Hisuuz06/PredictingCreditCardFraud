@@ -28,10 +28,17 @@ project/
 │   └── folds.csv
 │
 ├── ml/                                # Các mô hình Machine Learning
-│   ├── logistic_regression_model.py
-│   ├── catboost_model.py
-│   ├── lightgbm_model.py
-│   └── xgboost_model.py
+│   ├── estimators/                    # Định nghĩa/cấu hình estimator
+│   │   ├── logistic_regression_model.py
+│   │   ├── catboost_model.py
+│   │   ├── lightgbm_model.py
+│   │   └── xgboost_model.py
+│   └── trainers/                      # Huấn luyện và cross-validation
+│       ├── train_logistic_regression.py
+│       ├── train_catboost.py
+│       ├── train_lightgbm.py
+│       ├── train_xgboost.py
+│       └── cv_training.py             # Vòng CV dùng chung
 │
 ├── dl/                                # Các mô hình Deep Learning
 │   ├── mlp_model.py
@@ -113,16 +120,21 @@ project/
 
 **Ví dụ:** Khi chạy fold 0, mô hình học trên fold 1–4 và được đánh giá trên fold 0. Lặp qua cả 5 fold để có ROC AUC trung bình và độ lệch chuẩn. Nếu dữ liệu có phụ thuộc thời gian/nhóm khách hàng hoặc thẻ, cần xem xét cách chia khác để tránh leakage.
 
-### `ml/` – Các mô hình Machine Learning
+### `ml/estimators/` – Định nghĩa mô hình Machine Learning
 
 | File | Vai trò |
 | --- | --- |
 | `logistic_regression_model.py` | Baseline ML đơn giản để có mốc so sánh ban đầu. |
 | `catboost_model.py` | Mô hình CatBoost cho dữ liệu bảng, dùng ở baseline và các lần cải tiến. |
-| `lightgbm_model.py` | Huấn luyện/đánh giá LightGBM. |
-| `xgboost_model.py` | Huấn luyện/đánh giá XGBoost. |
+| `lightgbm_model.py` | Cấu hình estimator LightGBM. |
+| `xgboost_model.py` | Cấu hình estimator XGBoost. |
 
-Các script cần tuân theo fold/feature contract chung và xuất dự đoán theo đúng định dạng đã thống nhất. **Phụ trách chính: Người 2 (ML).**
+### `ml/trainers/` – Huấn luyện và cross-validation
+
+- **`train_*.py`**: Các entrypoint huấn luyện từng mô hình ML; có thể được gọi từ notebook.
+- **`cv_training.py`**: Vòng lặp 5-fold dùng chung, lưu CV results, OOF và model theo fold.
+
+Các trainer cần tuân theo fold/feature contract chung và xuất dự đoán theo đúng định dạng đã thống nhất. **Phụ trách chính: Người 2 (ML).**
 
 ### `dl/` – Các mô hình Deep Learning
 
