@@ -146,6 +146,16 @@ def _save_submission(
     model_name: str, predictions: np.ndarray, sample: pd.DataFrame
 ) -> None:
     _validate_predictions(predictions, model_name)
+
+    prediction_dir = ROOT / "predictions" / "test"
+    prediction_dir.mkdir(parents=True, exist_ok=True)
+    test_predictions = pd.DataFrame(
+        {"id": sample["id"], "prediction": predictions}
+    )
+    prediction_path = prediction_dir / f"{model_name}_test.csv"
+    test_predictions.to_csv(prediction_path, index=False)
+    print(f"Saved {prediction_path}")
+
     output_dir = ROOT / "submissions"
     output_dir.mkdir(parents=True, exist_ok=True)
     submission = sample.copy()
