@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from ml.estimators.logistic_regression_model import build_model
 from ml.trainers.cv_training import train_cross_validation
@@ -44,6 +49,15 @@ def _fit_predict(
     X_validation: pd.DataFrame,
     _categorical_columns: list[str],
 ) -> np.ndarray:
+    # SimpleImputer in current scikit-learn versions does not accept bool dtype.
+    # Convert boolean features to 0/1 while preserving the shared feature set.
+    boolean_columns = X_train.select_dtypes(include=["bool"]).columns
+    if len(boolean_columns):
+        X_train = X_train.copy()
+        X_validation = X_validation.copy()
+        X_train[boolean_columns] = X_train[boolean_columns].astype("int8")
+        X_validation[boolean_columns] = X_validation[boolean_columns].astype("int8")
+
     model.fit(X_train, y_train)
     return model.predict_proba(X_validation)[:, 1]
 
