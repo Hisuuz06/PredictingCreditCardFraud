@@ -86,6 +86,62 @@ def _predict_catboost(
     return predictions
 
 
+def _predict_lightgbm(
+    train: pd.DataFrame, test_features: pd.DataFrame
+) -> np.ndarray:
+    from lightgbm import Booster
+
+    categorical_columns = train.drop(columns=["id", "is_fraud"]).select_dtypes(
+        include=["object", "category", "string"]
+    ).columns.tolist()
+    predictions = np.zeros(len(test_features), dtype=np.float64)
+    for fold in range(N_FOLDS):
+        path = MODEL_DIR / f"lightgbm_fold_{fold}.txt"
+        if not path.is_file():
+            raise FileNotFoundError(f"Missing LightGBM model: {path}")
+        model = Booster(model_file=str(path))
+        fold_features = test_features.copy()
+        categories = model.pandas_categorical or []
+        if len(categories) != len(categorical_columns):
+            raise ValueError(f"LightGBM fold {fold} categorical schema mismatch.")
+        for column, category_values in zip(categorical_columns, categories):
+            fold_features[column] = pd.Categorical(
+                fold_features[column], categories=category_values
+            )
+        predictions += np.asarray(model.predict(fold_features), dtype=np.float64) / N_FOLDS
+    return predictions
+
+
+def _predict_xgboost(
+    train: pd.DataFrame, test_features: pd.DataFrame
+) -> np.ndarray:
+    from xgboost import XGBClassifier
+
+    categorical_columns = train.drop(columns=["id", "is_fraud"]).select_dtypes(
+        include=["object", "category", "string"]
+    ).columns.tolist()
+    folds = pd.read_csv(ROOT / "validation" / "folds.csv").set_index("id")["fold"]
+    row_folds = train["id"].map(folds)
+    if row_folds.isna().any():
+        raise ValueError("Could not match every training ID to a validation fold.")
+
+    predictions = np.zeros(len(test_features), dtype=np.float64)
+    for fold in range(N_FOLDS):
+        path = MODEL_DIR / f"xgboost_fold_{fold}.json"
+        if not path.is_file():
+            raise FileNotFoundError(f"Missing XGBoost model: {path}")
+        fold_features = test_features.copy()
+        for column in categorical_columns:
+            categories = train.loc[row_folds != fold, column].astype("category").cat.categories
+            fold_features[column] = pd.Categorical(
+                fold_features[column], categories=categories
+            )
+        model = XGBClassifier()
+        model.load_model(str(path))
+        predictions += model.predict_proba(fold_features)[:, 1] / N_FOLDS
+    return predictions
+
+
 def _save_submission(
     model_name: str, predictions: np.ndarray, sample: pd.DataFrame
 ) -> None:
@@ -116,6 +172,18 @@ def main() -> None:
         _save_submission("catboost", _predict_catboost(train, test_features), sample)
     else:
         print("Skipping CatBoost: its five fold models have not all been trained.")
+
+    lightgbm_models = [MODEL_DIR / f"lightgbm_fold_{fold}.txt" for fold in range(N_FOLDS)]
+    if all(path.is_file() for path in lightgbm_models):
+        _save_submission("lightgbm", _predict_lightgbm(train, test_features), sample)
+    else:
+        print("Skipping LightGBM: its five fold models have not all been trained.")
+
+    xgboost_models = [MODEL_DIR / f"xgboost_fold_{fold}.json" for fold in range(N_FOLDS)]
+    if all(path.is_file() for path in xgboost_models):
+        _save_submission("xgboost", _predict_xgboost(train, test_features), sample)
+    else:
+        print("Skipping XGBoost: its five fold models have not all been trained.")
 
 
 if __name__ == "__main__":
