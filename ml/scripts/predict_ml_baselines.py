@@ -1,7 +1,7 @@
 """Create Kaggle submissions from the saved 5-fold ML baseline models.
 
 Run from the project root:
-    .\\.venv\\Scripts\\python.exe ml\\trainers\\predict_ml_baselines.py
+    .\\.venv\\Scripts\\python.exe ml\\scripts\\predict_ml_baselines.py
 
 Each submission averages the five fold models and follows the ID order in
 data/raw/sample_submission.csv.
@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-MODEL_DIR = ROOT / "models"
+BASELINE_NAME = "ml_baseline"
+MODEL_DIR = ROOT / "models" / BASELINE_NAME
 TRAIN_PATH = ROOT / "data" / "raw" / "train.csv"
 TEST_PATH = ROOT / "data" / "raw" / "test.csv"
 SAMPLE_PATH = ROOT / "data" / "raw" / "sample_submission.csv"
@@ -147,7 +148,7 @@ def _save_submission(
 ) -> None:
     _validate_predictions(predictions, model_name)
 
-    prediction_dir = ROOT / "predictions" / "test"
+    prediction_dir = ROOT / "predictions" / "test" / BASELINE_NAME
     prediction_dir.mkdir(parents=True, exist_ok=True)
     test_predictions = pd.DataFrame(
         {"id": sample["id"], "prediction": predictions}
@@ -156,7 +157,7 @@ def _save_submission(
     test_predictions.to_csv(prediction_path, index=False)
     print(f"Saved {prediction_path}")
 
-    output_dir = ROOT / "submissions"
+    output_dir = ROOT / "submissions" / BASELINE_NAME
     output_dir.mkdir(parents=True, exist_ok=True)
     submission = sample.copy()
     submission["is_fraud"] = predictions

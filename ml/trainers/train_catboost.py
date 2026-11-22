@@ -32,13 +32,20 @@ def _save_model(model: CatBoostClassifier, path: Path) -> None:
     model.save_model(str(path))
 
 
-def train_catboost() -> None:
+def train_catboost(
+    feature_columns: list[str] | None = None, *, feature_version: str | None = None
+) -> None:
+    if feature_columns is None:
+        columns = pd.read_csv(ROOT / "data" / "raw" / "train.csv", nrows=0).columns
+        feature_columns = [column for column in columns if column not in {"id", "is_fraud"}]
     train_cross_validation(
         model_name="catboost",
         model_extension="cbm",
+        feature_columns=feature_columns,
         model_factory=lambda _X_train, _y_train, _categorical_columns: build_model(),
         fit_predict=_fit_predict,
         save_model=_save_model,
+        feature_version=feature_version,
     )
 
 

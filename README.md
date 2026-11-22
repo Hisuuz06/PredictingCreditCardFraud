@@ -47,26 +47,25 @@ project/
 │
 ├── predictions/                       # Kết quả dự đoán từ từng mô hình
 │   ├── oof/
-│   │   ├── logistic_regression_oof.csv
-│   │   ├── catboost_oof.csv
-│   │   ├── lightgbm_oof.csv
-│   │   ├── xgboost_oof.csv
-│   │   └── mlp_oof.csv
+│   │   ├── ml_baseline/                # OOF của baseline ML và MLP
+│   │   └── ...                         # Các mô hình/pipeline khác
 │   └── test/
-│       ├── catboost_test.csv
-│       ├── lightgbm_test.csv
-│       ├── xgboost_test.csv
-│       └── mlp_test.csv
+│       ├── ml_baseline/                # Dự đoán test của baseline
+│       └── ...                         # Các mô hình/pipeline khác
 │
 ├── ensemble/                          # Kết hợp dự đoán của các mô hình
 │   ├── ensemble.py
 │   └── ensemble_config.py
 │
-├── submissions/                       # Các file CSV nộp lên Kaggle
+├── models/                             # Model đã train
+│   └── ml_baseline/                    # Model ML và MLP baseline
+├── submissions/                       # Submission
+│   └── ml_baseline/                    # Submission do baseline tạo ra
 │   ├── submission_baseline.csv
 │   └── submission_final.csv
 │
 ├── evaluation/                        # Đánh giá và theo dõi thí nghiệm
+│   ├── ml_baseline/                    # Kết quả CV của baseline
 │   ├── metrics.py
 │   ├── benchmark.py
 │   └── experiment_log.csv
@@ -180,6 +179,7 @@ Theo kế hoạch, file nộp có các cột `id,is_fraud`; `is_fraud` là **xá
 - **`metrics.py`**: Các hàm tính chỉ số đánh giá, trọng tâm là **ROC AUC**.
 - **`benchmark.py`**: Tổng hợp/so sánh kết quả các mô hình qua các fold, ví dụ ROC AUC trung bình và độ lệch chuẩn.
 - **`experiment_log.csv`**: Nhật ký thí nghiệm: người làm, mô hình, seed, feature version, tham số, kết quả, thời gian chạy, đường dẫn artifact và ghi chú.
+- CV results của baseline được lưu trong `evaluation/ml_baseline/`.
 
 Nhờ vậy nhóm biết thay đổi nào thật sự cải thiện mô hình và có thể tái lập kết quả.
 

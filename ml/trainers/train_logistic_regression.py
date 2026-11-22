@@ -66,13 +66,20 @@ def _save_model(model: Pipeline, path: Path) -> None:
     joblib.dump(model, path)
 
 
-def train_logistic_regression() -> None:
+def train_logistic_regression(
+    feature_columns: list[str] | None = None, *, feature_version: str | None = None
+) -> None:
+    if feature_columns is None:
+        columns = pd.read_csv(ROOT / "data" / "raw" / "train.csv", nrows=0).columns
+        feature_columns = [column for column in columns if column not in {"id", "is_fraud"}]
     train_cross_validation(
         model_name="logistic_regression",
         model_extension="joblib",
+        feature_columns=feature_columns,
         model_factory=_build_model,
         fit_predict=_fit_predict,
         save_model=_save_model,
+        feature_version=feature_version,
     )
 
 
