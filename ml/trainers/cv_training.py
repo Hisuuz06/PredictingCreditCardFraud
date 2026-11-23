@@ -7,8 +7,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
+from features.feature_pipeline import FeaturePipeline
 
 ROOT = Path(__file__).resolve().parents[2]
+BASELINE_NAME = "ml_baseline"
+MODEL_DIR = ROOT / "models" / BASELINE_NAME
 TRAIN_PATH = ROOT / "data" / "raw" / "train.csv"
 FOLDS_PATH = ROOT / "validation" / "folds.csv"
 N_FOLDS = 5
@@ -24,9 +27,11 @@ SaveModel = Callable[[Any, Path], None]
 def train_cross_validation(
     model_name: str,
     model_extension: str,
+    feature_columns: list[str],
     model_factory: ModelFactory,
     fit_predict: FitPredict,
     save_model: SaveModel,
+    feature_version: str | None = None,
 ) -> None:
     if not FOLDS_PATH.is_file():
         raise FileNotFoundError(
@@ -57,13 +62,15 @@ def train_cross_validation(
     if set(data["fold"].unique()) != set(range(N_FOLDS)):
         raise ValueError(f"folds.csv must contain folds 0 through {N_FOLDS - 1}.")
 
-    feature_columns = [
-        column for column in train.columns if column not in {"id", "is_fraud"}
-    ]
-    features = data[feature_columns]
-    categorical_columns = features.select_dtypes(
-        include=["object", "category", "string"]
-    ).columns.tolist()
+    if not feature_columns:
+        raise ValueError("feature_columns must contain at least one feature.")
+    missing_features = set(feature_columns) - set(train.columns)
+    excluded_features = set(feature_columns) & {"id", "is_fraud"}
+    if missing_features or excluded_features:
+        raise ValueError(
+            "Invalid feature_columns: "
+            f"missing={sorted(missing_features)}, excluded={sorted(excluded_features)}"
+        )
     labels = data["is_fraud"].astype(int)
 
     fold_results: list[dict[str, float | int]] = []
@@ -71,18 +78,33 @@ def train_cross_validation(
     for fold in range(N_FOLDS):
         validation_mask = data["fold"] == fold
         training_mask = ~validation_mask
+        if feature_version is None:
+            X_train = data.loc[training_mask, feature_columns]
+            X_validation = data.loc[validation_mask, feature_columns]
+        else:
+            # Keep the fold assignment out of the model input. It is only
+            # bookkeeping used to create the CV split.
+            pipeline_columns = ["id", *feature_columns, "is_fraud"]
+            raw_train = data.loc[training_mask, pipeline_columns]
+            raw_validation = data.loc[validation_mask, pipeline_columns]
+            feature_pipeline = FeaturePipeline(version=feature_version).fit(raw_train)
+            X_train = feature_pipeline.transform(raw_train)
+            X_validation = feature_pipeline.transform(raw_validation)
+        categorical_columns = X_train.select_dtypes(
+            include=["object", "category", "string"]
+        ).columns.tolist()
         y_train = labels.loc[training_mask]
         model = model_factory(
-            features.loc[training_mask],
+            X_train,
             y_train,
             categorical_columns,
         )
         predictions = np.asarray(
             fit_predict(
                 model,
-                features.loc[training_mask],
+                X_train,
                 y_train,
-                features.loc[validation_mask],
+                X_validation,
                 categorical_columns,
             ),
             dtype=np.float64,
@@ -108,9 +130,15 @@ def train_cross_validation(
             )
         )
 
-        model_path = ROOT / "models" / f"{model_name}_fold_{fold}.{model_extension}"
+        experiment_name = f"ml_{feature_version}" if feature_version else BASELINE_NAME
+        model_dir = ROOT / "models" / experiment_name
+        model_path = model_dir / f"{model_name}_fold_{fold}.{model_extension}"
         model_path.parent.mkdir(parents=True, exist_ok=True)
         save_model(model, model_path)
+        if feature_version is not None:
+            import joblib
+
+            joblib.dump(feature_pipeline, model_dir / f"{model_name}_features_fold_{fold}.joblib")
         print(f"Fold {fold}: ROC AUC={fold_auc:.6f}")
 
     results = pd.DataFrame(fold_results)
@@ -118,8 +146,9 @@ def train_cross_validation(
     if len(oof) != len(train) or oof["id"].duplicated().any():
         raise RuntimeError("OOF output must contain exactly one row per training ID.")
 
-    evaluation_dir = ROOT / "evaluation"
-    predictions_dir = ROOT / "predictions" / "oof"
+    experiment_name = f"ml_{feature_version}" if feature_version else BASELINE_NAME
+    evaluation_dir = ROOT / "evaluation" / experiment_name
+    predictions_dir = ROOT / "predictions" / "oof" / experiment_name
     evaluation_dir.mkdir(parents=True, exist_ok=True)
     predictions_dir.mkdir(parents=True, exist_ok=True)
     results.to_csv(evaluation_dir / f"{model_name}_cv_results.csv", index=False)
