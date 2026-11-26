@@ -37,3 +37,8 @@ output/*
 
 tmp/*
 !tmp/.gitkeep
+
+data/
+predictions/
+*.npy
+.ipynb_checkpoints/
