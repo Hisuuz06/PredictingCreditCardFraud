@@ -3,3 +3,6 @@ predictions/
 *.npy
 __pycache__/
 .ipynb_checkpoints/
+
+models/*
+!models/.gitkeep
