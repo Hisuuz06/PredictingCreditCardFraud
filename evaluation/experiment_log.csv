@@ -1,0 +1,9 @@
+experiment_id,owner,model,feature_version,seed,folds,parameters,cv_auc_mean,cv_auc_std,oof_auc,kaggle_public_score,artifact_path,notes
+ml_catboost_v1,TV2,CatBoost,v1,42,5,"iterations=500; depth=6; lr=0.05; auto_class_weights=Balanced",0.945244,0.003729,0.945195,0.94577,predictions/oof/ml_v1/catboost_oof.csv,Best single ML model on main
+ml_lightgbm_v1,TV2,LightGBM,v1,42,5,"n_estimators=500; lr=0.05; num_leaves=31; class_weight=balanced",0.943630,0.003926,0.943581,0.94464,predictions/oof/ml_v1/lightgbm_oof.csv,Tree baseline v1
+ml_xgboost_v1,TV2,XGBoost,v1,42,5,"n_estimators=500; max_depth=6; lr=0.05; subsample=0.8",0.941230,0.004090,0.941162,0.94082,predictions/oof/ml_v1/xgboost_oof.csv,Tree baseline v1
+lr_v1,TV1,LogisticRegression,v1,42,5,"C=1.0; solver=lbfgs; max_iter=1000",0.941879,0.003449,0.941850,,predictions/oof/lr_v1.csv,Linear baseline via run_lr_oof.py
+lr_v3_linear,TV1,LogisticRegression,v3_linear,42,5,"C=1.0; solver=lbfgs; SplineTransformer(8 knots, degree=3)",0.944828,0.003378,0.944787,0.94525,predictions/oof/lr_v3_linear.csv,Spline on 5 nonlinear numeric columns
+dl_mlp_baseline,TV3,MLP,baseline,42,5,"hidden=(64,32); dropout=0.2; epochs=5; lr=0.001; batch=1024",0.942546,,,,predictions/oof/dl_baseline/mlp_oof.csv,StandardScaler + OneHotEncoder per fold
+dl_mlp_v3_linear,TV3,MLP,v3_linear,42,5,"hidden=(64,32); dropout=0.2; epochs=15; lr=0.001; batch=1024; Spline(8 knots)",0.943925,0.003560,0.943691,0.94569,predictions/oof/dl_v3_linear/mlp_oof.csv,Improved all 5 folds over baseline
+ensemble_weighted_rank_avg,TV3,WeightedRankEnsemble,"v1 + v3_linear",42,5,"weights={catboost_v1:0.3670, lr_v3_linear:0.3605, lightgbm_v1:0.2094, mlp_v3_linear:0.0631}",0.945939,0.003600,0.945889,0.94631,submissions/submission_final.csv,Selected best OOF method over equal/prob blends
