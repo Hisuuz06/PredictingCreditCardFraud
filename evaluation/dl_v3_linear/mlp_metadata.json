@@ -1,0 +1,16 @@
+{
+  "model": "MLP",
+  "variant": "v3_linear",
+  "seed": 42,
+  "epochs": 15,
+  "batch_size": 1024,
+  "learning_rate": 0.001,
+  "hidden_dims": [
+    64,
+    32
+  ],
+  "dropout": 0.2,
+  "cv_auc_mean": 0.943925,
+  "cv_auc_std": 0.00356,
+  "oof_auc": 0.943691
+}

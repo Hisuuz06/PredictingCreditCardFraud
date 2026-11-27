@@ -1,5 +1,46 @@
 # Cấu trúc thư mục dự án Kaggle S6E11
 
+## EDA đã triển khai
+
+- [Notebook EDA](notebooks/01_eda.ipynb): chứa toàn bộ mã phân tích, kiểm tra chất lượng, phân phối, liên hệ với nhãn, so sánh train/test và fold mapping; có kết quả chạy sẵn.
+- [Data dictionary](reports/data_dictionary.md): đủ 26 cột train, kiểu dữ liệu, miền quan sát, ý nghĩa suy luận và các định nghĩa cần xác nhận.
+- [Báo cáo EDA và chất lượng dữ liệu](reports/eda_report.md): kết quả, biểu đồ, giới hạn và bàn giao cho ML/DL.
+- `reports/figures/`: 7 hình PNG do notebook tạo.
+
+Chạy từ thư mục gốc bằng Python của dự án, sau đó mở notebook và chọn kernel `.venv`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Trong VS Code/Jupyter, mở `notebooks/01_eda.ipynb` và chọn **Run All**. Notebook tự tìm thư mục gốc, đọc dữ liệu gốc và tạo lại các biểu đồ; không huấn luyện mô hình.
+
+## DL (MLP) & Ensemble đã triển khai
+
+- **MLP (`dl/`):**
+  - `dl/models/mlp_model.py`: định nghĩa mạng MLP (`64 -> 32 -> 1`, ReLU, Dropout) và bộ tiền xử lý (`baseline` hoặc `v3_linear` dùng spline từ `features/linear_preprocessor.py`).
+  - `dl/trainers/cv_training.py`, `dl/trainers/train_mlp.py`: huấn luyện 5-fold CV theo `validation/folds.csv`, lưu checkpoint vào `models/dl_<variant>/`, CV vào `evaluation/dl_<variant>/` và OOF vào `predictions/oof/dl_<variant>/`.
+  - `dl/scripts/train_mlp.py`, `dl/scripts/predict_mlp.py`: script chạy train và suy luận test.
+- **Ensemble (`ensemble/`):**
+  - `ensemble/ensemble_config.py`, `ensemble/ensemble.py`: đánh giá các phương pháp trộn OOF (`equal_prob_avg`, `equal_rank_avg`, `weighted_prob_avg`, `weighted_rank_avg`) và xuất `submissions/submission_final.csv`.
+- **Nhật ký thí nghiệm:** `evaluation/experiment_log.csv`.
+
+Chạy lại từ thư mục gốc:
+
+```powershell
+# 1. Huấn luyện và dự đoán MLP (v3_linear)
+.\.venv\Scripts\python.exe -m dl.scripts.train_mlp --variant v3_linear --epochs 15
+.\.venv\Scripts\python.exe -m dl.scripts.predict_mlp --variant v3_linear
+
+# 2. Tạo OOF/Test cho Logistic Regression (v3_linear)
+.\.venv\Scripts\python.exe run_lr_oof.py data/raw/
+
+# 3. Chạy Ensemble và xuất submissions/submission_final.csv
+.\.venv\Scripts\python.exe -m ensemble.ensemble
+```
+
+Phần còn lại bên dưới mô tả cấu trúc và vai trò dự kiến của toàn dự án.
+
 **Cuộc thi:** Kaggle Playground Series S6E11 – Predicting Credit Card Fraud  
 **Bài toán:** Phân loại nhị phân, dự đoán **xác suất** `is_fraud` trong khoảng `[0, 1]`.  
 **Chỉ số đánh giá chính:** ROC AUC.  

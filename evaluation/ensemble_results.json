@@ -1,0 +1,88 @@
+{
+  "individual_models": {
+    "catboost_v1": {
+      "cv_mean": 0.945244,
+      "cv_std": 0.003729,
+      "oof_auc": 0.945195
+    },
+    "lightgbm_v1": {
+      "cv_mean": 0.94363,
+      "cv_std": 0.003926,
+      "oof_auc": 0.943581
+    },
+    "xgboost_v1": {
+      "cv_mean": 0.94123,
+      "cv_std": 0.00409,
+      "oof_auc": 0.941162
+    },
+    "lr_v3_linear": {
+      "cv_mean": 0.944828,
+      "cv_std": 0.003378,
+      "oof_auc": 0.944787
+    },
+    "mlp_v3_linear": {
+      "cv_mean": 0.943925,
+      "cv_std": 0.00356,
+      "oof_auc": 0.943691
+    }
+  },
+  "ensemble_candidates": {
+    "equal_prob_avg": {
+      "cv_mean": 0.945324,
+      "cv_std": 0.003842,
+      "oof_auc": 0.945266,
+      "weights": {
+        "catboost_v1": 0.2,
+        "lightgbm_v1": 0.2,
+        "xgboost_v1": 0.2,
+        "lr_v3_linear": 0.2,
+        "mlp_v3_linear": 0.2
+      }
+    },
+    "equal_rank_avg": {
+      "cv_mean": 0.945633,
+      "cv_std": 0.003673,
+      "oof_auc": 0.945567,
+      "weights": {
+        "catboost_v1": 0.2,
+        "lightgbm_v1": 0.2,
+        "xgboost_v1": 0.2,
+        "lr_v3_linear": 0.2,
+        "mlp_v3_linear": 0.2
+      }
+    },
+    "weighted_prob_avg": {
+      "cv_mean": 0.945896,
+      "cv_std": 0.003618,
+      "oof_auc": 0.945846,
+      "weights": {
+        "catboost_v1": 0.0527,
+        "lightgbm_v1": 0.0277,
+        "xgboost_v1": 0.0199,
+        "lr_v3_linear": 0.743,
+        "mlp_v3_linear": 0.1568
+      }
+    },
+    "weighted_rank_avg": {
+      "cv_mean": 0.945939,
+      "cv_std": 0.0036,
+      "oof_auc": 0.945889,
+      "weights": {
+        "catboost_v1": 0.367,
+        "lightgbm_v1": 0.2094,
+        "xgboost_v1": 0.0,
+        "lr_v3_linear": 0.3605,
+        "mlp_v3_linear": 0.0631
+      }
+    }
+  },
+  "selected_method": "weighted_rank_avg",
+  "selected_weights": {
+    "catboost_v1": 0.367,
+    "lightgbm_v1": 0.2094,
+    "xgboost_v1": 0.0,
+    "lr_v3_linear": 0.3605,
+    "mlp_v3_linear": 0.0631
+  },
+  "selected_oof_auc": 0.945889
+}
